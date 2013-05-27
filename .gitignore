@@ -1,0 +1,4 @@
+proj.android/bin/
+proj.android/gen/
+local.properties
+*.iml
