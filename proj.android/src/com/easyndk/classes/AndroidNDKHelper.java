@@ -100,28 +100,27 @@ public class AndroidNDKHelper
                         if (retParamsJson == null) {
                             retParamsJson = new JSONObject();
                         }
-                        Log.v("retParamsJson", "retParamsJson: " + retParamsJson.toString());
+                        Log.v("EasyNDK", "retParamsJson: " + retParamsJson.toString());
                         return retParamsJson.toString();
 					}
 					catch (NoSuchMethodException e) {
                         throw new IllegalStateException(e);
 					}
 					catch (IllegalArgumentException e) {
-                        throw new IllegalStateException(e);
+                        Log.e("EasyNDK", "receiveCppMessage raised exception", e);
 					} catch (InvocationTargetException e) {
-                        throw new IllegalStateException(e);
+                        Log.e("EasyNDK", "receiveCppMessage raised exception", e);
                     } catch (IllegalAccessException e) {
-                        throw new IllegalStateException(e);
+                        Log.e("EasyNDK", "receiveCppMessage raised exception", e);
                     }
                 } else {
-                    throw new IllegalArgumentException("Wrong JSON structure");
+                    Log.e("EasyNDK", "receiveCppMessage raised exception: Wrong JSON structure");
                 }
 			}
 			catch (JSONException e) {
-                throw new IllegalStateException(e);
+                Log.e("EasyNDK", "receiveCppMessage raised exception", e);
 			}
-		} else {
-            return null;
         }
+        return null;
 	}
 }
