@@ -7,6 +7,7 @@
 //
 
 #include "NDKHelper.h"
+#include "JsonHelper.h"
 
 #define __CALLED_METHOD__           "calling_method_name"
 #define __CALLED_METHOD_PARAMS__    "calling_method_params"
@@ -39,131 +40,6 @@ void NDKHelper::removeSelectorsInGroup(char const *groupName) {
     }
 }
 
-CCObject *NDKHelper::getCCObjectFromJson(json_t *obj) {
-    if (obj == NULL) {
-        return NULL;
-    }
-
-    if (json_is_object(obj)) {
-        CCDictionary *dictionary = CCDictionary::create();
-
-        const char *key;
-        json_t *value;
-
-        void *iter = json_object_iter(obj);
-        while (iter) {
-            key = json_object_iter_key(iter);
-            value = json_object_iter_value(iter);
-
-            dictionary->setObject(NDKHelper::getCCObjectFromJson(value), string(key));
-
-            iter = json_object_iter_next(obj, iter);
-        }
-
-        return dictionary;
-    }
-    else if (json_is_array(obj)) {
-        size_t sizeArray = json_array_size(obj);
-        CCArray *array = CCArray::createWithCapacity(sizeArray);
-
-        for (unsigned int i = 0; i < sizeArray; i++) {
-            array->addObject(NDKHelper::getCCObjectFromJson(json_array_get(obj, i)));
-        }
-
-        return array;
-    }
-    else if (json_is_boolean(obj)) {
-        CCBool *ccBool = CCBool::create(json_boolean(obj));
-        return ccBool;
-    }
-    else if (json_is_integer(obj)) {
-        json_int_t intVal = json_integer_value(obj);
-
-        CCInteger *ccInteger = CCInteger::create(intVal);
-        return ccInteger;
-    }
-    else if (json_is_real(obj)) {
-        double realVal = json_real_value(obj);
-
-        CCDouble *ccDouble = CCDouble::create(realVal);
-        return ccDouble;
-    }
-    else if (json_is_string(obj)) {
-        stringstream str;
-        str << json_string_value(obj);
-
-        CCString *ccString = CCString::create(str.str());
-        return ccString;
-    }
-    else {
-        CC_ASSERT(false);
-        return NULL;
-    }
-}
-
-json_t* NDKHelper::getJsonFromCCObject(CCObject* obj) {
-    if (dynamic_cast<CCDictionary *>(obj)) {
-        CCDictionary *mainDict = (CCDictionary *) obj;
-        CCArray *allKeys = mainDict->allKeys();
-        json_t *jsonDict = json_object();
-
-        if (allKeys == NULL ) return jsonDict;
-        for (unsigned int i = 0; i < allKeys->count(); i++) {
-            const char *key = ((CCString *) allKeys->objectAtIndex(i))->getCString();
-            json_object_set_new(jsonDict,
-                    key,
-                    NDKHelper::getJsonFromCCObject(mainDict->objectForKey(key)));
-        }
-
-        return jsonDict;
-    }
-    else if (dynamic_cast<CCArray *>(obj)) {
-        CCArray *mainArray = (CCArray *) obj;
-        json_t *jsonArray = json_array();
-
-        for (unsigned int i = 0; i < mainArray->count(); i++) {
-            json_array_append_new(jsonArray,
-                    NDKHelper::getJsonFromCCObject(mainArray->objectAtIndex(i)));
-        }
-
-        return jsonArray;
-    }
-    else if (dynamic_cast<CCString *>(obj)) {
-        CCString *mainString = (CCString *) obj;
-        json_t *jsonString = json_string(mainString->getCString());
-
-        return jsonString;
-    }
-    else if (dynamic_cast<CCInteger *>(obj)) {
-        CCInteger *mainInteger = (CCInteger *) obj;
-        json_t *jsonInt = json_integer(mainInteger->getValue());
-
-        return jsonInt;
-    }
-    else if (dynamic_cast<CCDouble *>(obj)) {
-        CCDouble *mainDouble = (CCDouble *) obj;
-        json_t *jsonReal = json_real(mainDouble->getValue());
-
-        return jsonReal;
-    }
-    else if (dynamic_cast<CCFloat *>(obj)) {
-        CCFloat *mainFloat = (CCFloat *) obj;
-        json_t *jsonString = json_real(mainFloat->getValue());
-
-        return jsonString;
-    }
-    else if (dynamic_cast<CCBool *>(obj)) {
-        CCBool *mainBool = (CCBool *) obj;
-        json_t *jsonBoolean = json_boolean(mainBool->getValue());
-
-        return jsonBoolean;
-    }
-    else {
-        CC_ASSERT(false);
-        return NULL;
-    }
-}
-
 void NDKHelper::printSelectorList()
 {
     for (unsigned int i = 0; i < NDKHelper::selectorList.size(); ++i) {
@@ -173,8 +49,7 @@ void NDKHelper::printSelectorList()
     }
 }
 
-void NDKHelper::handleMessage(json_t *methodName, json_t* methodParams)
-{
+void NDKHelper::handleMessage(json_t *methodName, json_t* methodParams) {
     if (methodName == NULL)
         return;
     
@@ -184,7 +59,7 @@ void NDKHelper::handleMessage(json_t *methodName, json_t* methodParams)
     {
         if (NDKHelper::selectorList[i].getName().compare(methodNameStr) == 0)
         {
-            CCObject *dataToPass = NDKHelper::getCCObjectFromJson(methodParams);
+            CCObject *dataToPass = JsonHelper::getCCObjectFromJson(methodParams);
             SEL_CallFuncO sel = NDKHelper::selectorList[i].getSelector();
             CCObject *target = NDKHelper::selectorList[i].getTarget();
 
@@ -252,7 +127,7 @@ extern "C"
         
         if (methodParams != NULL)
         {
-            json_t* paramsJson = NDKHelper::getJsonFromCCObject(methodParams);
+            json_t* paramsJson = JsonHelper::getJsonFromCCObject(methodParams);
             json_object_set_new(toBeSentJson, __CALLED_METHOD_PARAMS__, paramsJson);
         }
 
@@ -295,7 +170,7 @@ extern "C"
 
         if (methodParams != NULL)
         {
-            json_t *jsonParams = NDKHelper::getJsonFromCCObject(methodParams);
+            json_t *jsonParams = JsonHelper::getJsonFromCCObject(methodParams);
             retJsonParams = IOSNDKHelperImpl::receiveCPPMessage(jsonMessageName, jsonParams);
             json_decref(jsonParams);
         } else {
@@ -310,6 +185,6 @@ extern "C"
         #endif
         
         json_decref(toBeSentJson);
-        return NDKHelper::getCCObjectFromJson(retJsonParams);
+        return JsonHelper::getCCObjectFromJson(retJsonParams);
     }
 }
