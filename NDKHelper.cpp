@@ -18,30 +18,22 @@ void NDKHelper::addSelector(char const *groupName, char const *name, CCObject *t
     NDKHelper::selectorList.push_back(NDKCallbackData(groupName, name, target, selector));
 }
 
-void NDKHelper::removeAtIndex(int index) {
-    NDKHelper::selectorList[index] = NDKHelper::selectorList.back();
-    NDKHelper::selectorList.pop_back();
-}
-
 void NDKHelper::removeSelectorsInGroup(char const *groupName) {
     std::vector<int> markedIndices;
-    
-    for (unsigned int i = 0; i < NDKHelper::selectorList.size(); ++i)
-    {
-        if (NDKHelper::selectorList[i].getGroup().compare(groupName) == 0)
-        {
+
+    for (unsigned int i = 0; i < NDKHelper::selectorList.size(); ++i) {
+        if (NDKHelper::selectorList[i].getGroup().compare(groupName) == 0) {
             markedIndices.push_back(i);
         }
     }
-    
-    for (unsigned int i = 0; i < markedIndices.size(); ++i)
-    {
-        NDKHelper::removeAtIndex(markedIndices[i]);
+
+    for (unsigned int i = 0; i < markedIndices.size(); ++i) {
+        selectorList[markedIndices[i]] = selectorList.back();
+        selectorList.pop_back();
     }
 }
 
-void NDKHelper::printSelectorList()
-{
+void NDKHelper::printSelectorList() {
     for (unsigned int i = 0; i < NDKHelper::selectorList.size(); ++i) {
         string s = NDKHelper::selectorList[i].getGroup();
         s.append(NDKHelper::selectorList[i].getName());
@@ -49,21 +41,20 @@ void NDKHelper::printSelectorList()
     }
 }
 
-void NDKHelper::handleMessage(json_t *methodName, json_t* methodParams) {
-    if (methodName == NULL)
+void NDKHelper::handleMessage(json_t *methodName, json_t *methodParams) {
+    if (methodName == NULL) {
         return;
-    
+    }
+
     const char *methodNameStr = json_string_value(methodName);
-    
-    for (unsigned int i = 0; i < NDKHelper::selectorList.size(); ++i)
-    {
-        if (NDKHelper::selectorList[i].getName().compare(methodNameStr) == 0)
-        {
+
+    for (unsigned int i = 0; i < NDKHelper::selectorList.size(); ++i) {
+        if (NDKHelper::selectorList[i].getName().compare(methodNameStr) == 0) {
             CCObject *dataToPass = JsonHelper::getCCObjectFromJson(methodParams);
             SEL_CallFuncO sel = NDKHelper::selectorList[i].getSelector();
             CCObject *target = NDKHelper::selectorList[i].getTarget();
 
-            (target->*sel)(dataToPass);
+            (target->* sel)(dataToPass);
 
             break;
         }
@@ -80,12 +71,14 @@ void NDKHelper::handleMessage(json_t *methodName, json_t* methodParams) {
 #endif
 
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-    #import "IOSNDKHelper-C-Interface.h"
+
+#import "IOSNDKHelper-C-Interface.h"
+
 #endif
 
 extern "C"
 {
-    #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
     // Method for recieving NDK messages from Java, Android
     void Java_com_easyndk_AndroidNDKHelper_cppNativeCallHandler(JNIEnv* env, jobject thiz, jstring json)
     {
@@ -114,32 +107,31 @@ extern "C"
     }
     #endif
 
-    // Method for sending message from CPP to the targeted platform
-    CCObject *NDKHelper::sendMessageWithParams(string methodName, CCObject *methodParams) {
-        CCDictionary *retParams = CCDictionary::create();
+// Method for sending message from CPP to the targeted platform
+CCObject *NDKHelper::sendMessageWithParams(string methodName, CCObject *methodParams) {
+    CCDictionary *retParams = CCDictionary::create();
 
-        if (0 == strcmp(methodName.c_str(), "")) {
-            return retParams;
-        }
+    if (0 == strcmp(methodName.c_str(), "")) {
+        return retParams;
+    }
 
-        json_t *toBeSentJson = json_object();
-        json_object_set_new(toBeSentJson, __CALLED_METHOD__, json_string(methodName.c_str()));
-        
-        if (methodParams != NULL)
-        {
-            json_t* paramsJson = JsonHelper::getJsonFromCCObject(methodParams);
-            json_object_set_new(toBeSentJson, __CALLED_METHOD_PARAMS__, paramsJson);
-        }
+    json_t *toBeSentJson = json_object();
+    json_object_set_new(toBeSentJson, __CALLED_METHOD__, json_string(methodName.c_str()));
 
-        json_t *retJsonParams = NULL;
-        #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+    if (methodParams != NULL) {
+        json_t *paramsJson = JsonHelper::getJsonFromCCObject(methodParams);
+        json_object_set_new(toBeSentJson, __CALLED_METHOD_PARAMS__, paramsJson);
+    }
+
+    json_t *retJsonParams = NULL;
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         JniMethodInfo t;
         
 		if (JniHelper::getStaticMethodInfo(t,
                                            CLASS_NAME,
                                            "receiveCppMessage",
-                                           "(Ljava/lang/String;)Ljava/lang/String;"))
-		{
+                                           "(Ljava/lang/String;)Ljava/lang/String;")) {
+
             char* jsonStrLocal = json_dumps(toBeSentJson, JSON_COMPACT | JSON_ENSURE_ASCII);
             string jsonStr(jsonStrLocal);
             free(jsonStrLocal);
@@ -166,25 +158,24 @@ extern "C"
             }
 		}
         #elif (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
-        json_t *jsonMessageName = json_string(methodName.c_str());
+    json_t *jsonMessageName = json_string(methodName.c_str());
 
-        if (methodParams != NULL)
-        {
-            json_t *jsonParams = JsonHelper::getJsonFromCCObject(methodParams);
-            retJsonParams = IOSNDKHelperImpl::receiveCPPMessage(jsonMessageName, jsonParams);
-            json_decref(jsonParams);
-        } else {
-            retJsonParams = IOSNDKHelperImpl::receiveCPPMessage(jsonMessageName, NULL);
-        }
-
-        if (!retJsonParams) {
-            return retParams;
-        }
-
-        json_decref(jsonMessageName);
-        #endif
-        
-        json_decref(toBeSentJson);
-        return JsonHelper::getCCObjectFromJson(retJsonParams);
+    if (methodParams != NULL) {
+        json_t *jsonParams = JsonHelper::getJsonFromCCObject(methodParams);
+        retJsonParams = IOSNDKHelperImpl::receiveCPPMessage(jsonMessageName, jsonParams);
+        json_decref(jsonParams);
+    } else {
+        retJsonParams = IOSNDKHelperImpl::receiveCPPMessage(jsonMessageName, NULL);
     }
+
+    if (!retJsonParams) {
+        return retParams;
+    }
+
+    json_decref(jsonMessageName);
+#endif
+
+    json_decref(toBeSentJson);
+    return JsonHelper::getCCObjectFromJson(retJsonParams);
+}
 }

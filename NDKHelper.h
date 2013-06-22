@@ -14,20 +14,24 @@
 #include <vector>
 #include "jansson.h"
 #include "NDKCallbackData.h"
+
 USING_NS_CC;
 using namespace std;
 
 class NDKHelper {
 public :
-    static CCObject *sendMessageWithParams(string methodName, CCObject *methodParams);
     static void addSelector(char const *groupName, char const *name, CCObject *target, SEL_CallFuncO selector);
+
     static void removeSelectorsInGroup(char const *groupName);
+
     static void printSelectorList();
 
-    static void handleMessage(json_t *methodName, json_t* methodParams);
+    static CCObject *sendMessageWithParams(string methodName, CCObject *methodParams);
+
+    static void handleMessage(json_t *methodName, json_t *methodParams);
+
 private :
     static vector<NDKCallbackData> selectorList;
-    static void removeAtIndex(int index);
 };
 
 #endif /* defined(__EasyNDK_for_cocos2dx__NDKHelper__) */
