@@ -45,8 +45,7 @@ CCObject *NDKHelper::getCCObjectFromJson(json_t *obj) {
     }
 
     if (json_is_object(obj)) {
-        CCDictionary *dictionary = new CCDictionary();
-//        CCDictionary::create();
+        CCDictionary *dictionary = CCDictionary::create();
 
         const char *key;
         json_t *value;
@@ -56,7 +55,7 @@ CCObject *NDKHelper::getCCObjectFromJson(json_t *obj) {
             key = json_object_iter_key(iter);
             value = json_object_iter_value(iter);
 
-            dictionary->setObject(NDKHelper::getCCObjectFromJson(value)->autorelease(), string(key));
+            dictionary->setObject(NDKHelper::getCCObjectFromJson(value), string(key));
 
             iter = json_object_iter_next(obj, iter);
         }
@@ -65,40 +64,35 @@ CCObject *NDKHelper::getCCObjectFromJson(json_t *obj) {
     }
     else if (json_is_array(obj)) {
         size_t sizeArray = json_array_size(obj);
-        CCArray *array = new CCArray();
-        //CCArray::createWithCapacity(sizeArray);
+        CCArray *array = CCArray::createWithCapacity(sizeArray);
 
         for (unsigned int i = 0; i < sizeArray; i++) {
-            array->addObject(NDKHelper::getCCObjectFromJson(json_array_get(obj, i))->autorelease());
+            array->addObject(NDKHelper::getCCObjectFromJson(json_array_get(obj, i)));
         }
 
         return array;
     }
     else if (json_is_boolean(obj)) {
-        CCBool *ccBool = new CCBool(json_boolean(obj));
-        //CCString::create(str.str());
+        CCBool *ccBool = CCBool::create(json_boolean(obj));
         return ccBool;
     }
     else if (json_is_integer(obj)) {
         json_int_t intVal = json_integer_value(obj);
 
-        CCInteger *ccInteger = new CCInteger(intVal);
-        //CCInteger::create(str.str());
+        CCInteger *ccInteger = CCInteger::create(intVal);
         return ccInteger;
     }
     else if (json_is_real(obj)) {
         double realVal = json_real_value(obj);
 
-        CCDouble *ccDouble = new CCDouble(realVal);
-        //CCDouble::create(str.str());
+        CCDouble *ccDouble = CCDouble::create(realVal);
         return ccDouble;
     }
     else if (json_is_string(obj)) {
         stringstream str;
         str << json_string_value(obj);
 
-        CCString *ccString = new CCString(str.str());
-        //CCString::create(str.str());
+        CCString *ccString = CCString::create(str.str());
         return ccString;
     }
     else {
@@ -196,10 +190,6 @@ void NDKHelper::handleMessage(json_t *methodName, json_t* methodParams)
 
             (target->*sel)(dataToPass);
 
-            if (dataToPass != NULL) {
-                dataToPass->autorelease();
-                dataToPass->retain();
-            }
             break;
         }
     }
@@ -249,8 +239,8 @@ extern "C"
     }
     #endif
     
-    // Method for sending message from CPP to the targetted platform
-    CCObject* sendMessageWithParams(string methodName, CCObject* methodParams, bool async) {
+    // Method for sending message from CPP to the targeted platform
+    CCObject *sendMessageWithParams(string methodName, CCObject *methodParams) {
         CCDictionary *retParams = CCDictionary::create();
 
         if (0 == strcmp(methodName.c_str(), "")) {
@@ -273,14 +263,14 @@ extern "C"
 		if (JniHelper::getStaticMethodInfo(t,
                                            CLASS_NAME,
                                            "receiveCppMessage",
-                                           "(Ljava/lang/String;Z)Ljava/lang/String;"))
+                                           "(Ljava/lang/String;)Ljava/lang/String;"))
 		{
             char* jsonStrLocal = json_dumps(toBeSentJson, JSON_COMPACT | JSON_ENSURE_ASCII);
             string jsonStr(jsonStrLocal);
             free(jsonStrLocal);
             
             jstring stringArg1 = t.env->NewStringUTF(jsonStr.c_str());
-            jstring retString = (jstring) t.env->CallStaticObjectMethod(t.classID, t.methodID, stringArg1, (jboolean)async);
+            jstring retString = (jstring) t.env->CallStaticObjectMethod(t.classID, t.methodID, stringArg1);
 
             t.env->DeleteLocalRef(stringArg1);
 			t.env->DeleteLocalRef(t.classID);
