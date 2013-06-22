@@ -6,7 +6,6 @@
 //
 //
 
-#import <Foundation/Foundation.h>
 #import "IOSNDKHelper.h"
 #import "NDKHelper.h"
 
@@ -148,8 +147,7 @@ json_t * IOSNDKHelperImpl::receiveCPPMessage(json_t *methodName, json_t *methodP
         json_error_t jerror;
         jsonPrms = json_loads([jsonPrmsString UTF8String], 0, &jerror);
         
-        if (!jsonPrms)
-        {
+        if (!jsonPrms) {
             fprintf(stderr, "error: on line %d: %s\n", jerror.line, jerror.text);
             return;
         }

@@ -19,21 +19,17 @@ USING_NS_CC;
 using namespace std;
 
 class NDKHelper {
-    public :
-        static void addSelector(char const *groupName, char const *name, CCObject *target, SEL_CallFuncO selector);
-        static void removeSelectorsInGroup(char const *groupName);
-        static void printSelectorList();
-        static CCObject *getCCObjectFromJson(json_t *obj);
-        static json_t *getJsonFromCCObject(CCObject* obj);
-        static void handleMessage(json_t *methodName, json_t* methodParams);
-    private :
-        static vector<NDKCallbackData> selectorList;
-        static void removeAtIndex(int index);
+public :
+    static CCObject *sendMessageWithParams(string methodName, CCObject *methodParams);
+    static void addSelector(char const *groupName, char const *name, CCObject *target, SEL_CallFuncO selector);
+    static void removeSelectorsInGroup(char const *groupName);
+    static void printSelectorList();
+    static CCObject *getCCObjectFromJson(json_t *obj);
+    static json_t *getJsonFromCCObject(CCObject* obj);
+    static void handleMessage(json_t *methodName, json_t* methodParams);
+private :
+    static vector<NDKCallbackData> selectorList;
+    static void removeAtIndex(int index);
 };
-
-extern "C"
-{
-    CCObject *sendMessageWithParams(string methodName, CCObject *methodParams);
-}
 
 #endif /* defined(__EasyNDK_for_cocos2dx__NDKHelper__) */

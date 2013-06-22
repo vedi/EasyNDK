@@ -13,14 +13,13 @@
 #include "cocos2d.h"
 #include "jansson.h"
 #include <string>
+
 USING_NS_CC;
 using namespace std;
 
 class IOSNDKHelperImpl
 {
     public :
-        IOSNDKHelperImpl();
-        ~IOSNDKHelperImpl();
         static json_t * receiveCPPMessage(json_t *methodName, json_t* methodParams);
         static void setNDKReceiver(void*receiver);
 };

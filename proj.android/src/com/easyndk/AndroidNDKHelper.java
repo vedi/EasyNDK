@@ -1,4 +1,4 @@
-package com.easyndk.classes;
+package com.easyndk;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -7,72 +7,32 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.os.Handler;
-import android.os.Message;
-
 public class AndroidNDKHelper
 {
 	private static Object callHandler = null;
-	private static Handler NDKHelperHandler = null;
-	
+
 	private static native void cppNativeCallHandler(String json);
+
 	private static String __CALLED_METHOD__ = "calling_method_name";
 	private static String __CALLED_METHOD_PARAMS__ = "calling_method_params";
-	private final static int __MSG_FROM_CPP__ = 5; 
-	
-	public static void setNDKReceiver(Object callReceiver)
-	{
+
+    public static void setNDKReceiver(Object callReceiver) {
 		callHandler = callReceiver;
-		NDKHelperHandler = new Handler()
-		{
-        	public void handleMessage(Message msg)
-        	{
-        		switch(msg.what)
-        		{
-	        		case __MSG_FROM_CPP__:
-	        			try
-	        			{
-	        				NDKMessage message = (NDKMessage)msg.obj;
-	        				message.methodToCall.invoke(AndroidNDKHelper.callHandler, message.methodParams);
-	        			}
-	        			catch (IllegalArgumentException e)
-	        			{
-	        				// TODO Auto-generated catch block
-	        				e.printStackTrace();
-	        			}
-	        			catch (IllegalAccessException e)
-	        			{
-	        				// TODO Auto-generated catch block
-	        				e.printStackTrace();
-	        			}
-	        			catch (InvocationTargetException e)
-	        			{
-	        				// TODO Auto-generated catch block
-	        				e.printStackTrace();
-	        			}
-	        		break;
-        		}
-        	}
-        };
 	}
 	
 	public static void sendMessageWithParameters(String methodToCall, JSONObject paramList)
 	{
 		JSONObject obj = new JSONObject();
-		try
-		{
+		try {
 			obj.put(__CALLED_METHOD__, methodToCall);
 			obj.put(__CALLED_METHOD_PARAMS__, paramList);
 			cppNativeCallHandler(obj.toString());
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
 		}
 	}
 	
-	public static String receiveCppMessage(String json, boolean async)
-	{
+	public static String receiveCppMessage(String json) {
 		if (json != null)
 		{
 			try
@@ -93,7 +53,7 @@ public class AndroidNDKHelper
 					}
 					
 					try {
-						Method m = AndroidNDKHelper.callHandler.getClass().getMethod(methodName, new Class[] { JSONObject.class });
+						Method m = AndroidNDKHelper.callHandler.getClass().getMethod(methodName, JSONObject.class);
 
                         JSONObject retParamsJson =
                                 (JSONObject) m.invoke(AndroidNDKHelper.callHandler, methodParams);
