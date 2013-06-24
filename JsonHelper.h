@@ -15,9 +15,9 @@
 class JsonHelper {
 
 public:
-    static CCObject *getCCObjectFromJson(json_t *obj);
+    static cocos2d::CCObject *getCCObjectFromJson(json_t *obj);
 
-    static json_t *getJsonFromCCObject(CCObject* obj);
+    static json_t *getJsonFromCCObject(cocos2d::CCObject* obj);
 };
 
 

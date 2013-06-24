@@ -7,7 +7,8 @@ LOCAL_MODULE := easyndk_static
 LOCAL_MODULE_FILENAME := libeasyndk
 
 LOCAL_SRC_FILES := ../../NDKCallbackData.cpp \
-	../../NDKHelper.cpp
+	../../NDKHelper.cpp \
+	../../JsonHelper.cpp
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../Classes
 
