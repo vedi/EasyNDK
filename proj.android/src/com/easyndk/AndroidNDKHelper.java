@@ -7,8 +7,7 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class AndroidNDKHelper
-{
+public class AndroidNDKHelper {
 	private static Object callHandler = null;
 
 	private static native void cppNativeCallHandler(String json);
