@@ -32,6 +32,8 @@ public :
 
 private :
     static vector<NDKCallbackData> selectorList;
+
+    static CCObject *applyPlatformParams(CCObject *pObject);
 };
 
 #endif /* defined(__EasyNDK_for_cocos2dx__NDKHelper__) */

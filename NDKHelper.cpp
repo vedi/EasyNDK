@@ -119,7 +119,7 @@ CCObject *NDKHelper::sendMessageWithParams(string methodName, CCObject *methodPa
     json_object_set_new(toBeSentJson, __CALLED_METHOD__, json_string(methodName.c_str()));
 
     if (methodParams != NULL) {
-        json_t *paramsJson = JsonHelper::getJsonFromCCObject(methodParams);
+        json_t *paramsJson = JsonHelper::getJsonFromCCObject(applyPlatformParams(methodParams));
         json_object_set_new(toBeSentJson, __CALLED_METHOD_PARAMS__, paramsJson);
     }
 
@@ -178,4 +178,44 @@ CCObject *NDKHelper::sendMessageWithParams(string methodName, CCObject *methodPa
     json_decref(toBeSentJson);
     return JsonHelper::getCCObjectFromJson(retJsonParams);
 }
+
+CCObject *NDKHelper::applyPlatformParams(CCObject *pObject) {
+
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+    string platformPrefix = "android.";
+#elif (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    string platformPrefix = "ios.";
+#endif
+
+    if (dynamic_cast<CCDictionary *>(pObject) != NULL) {
+        CCDictionary *pDict = dynamic_cast<CCDictionary *>(pObject);
+        CCArray *keys = pDict->allKeys();
+        CCObject *key;
+        CCString *keyStr;
+        CCARRAY_FOREACH(keys, key) {
+                keyStr = (CCString *) key;
+                if (keyStr->m_sString.find(platformPrefix) == 0) {
+                    string newKey = keyStr->m_sString.substr(platformPrefix.length());
+                    pDict->setObject(pDict->objectForKey(keyStr->m_sString), newKey);
+                    pDict->removeObjectForKey(keyStr->m_sString);
+                }
+            }
+
+        keys = pDict->allKeys();
+        CCARRAY_FOREACH(keys, key) {
+                keyStr = (CCString *) key;
+                applyPlatformParams(pDict->objectForKey(keyStr->m_sString));
+            }
+    } else if (dynamic_cast<CCArray *>(pObject) != NULL) {
+        CCArray *pArr = dynamic_cast<CCArray *>(pObject);
+        CCObject *obj;
+        CCARRAY_FOREACH(pArr, obj) {
+                applyPlatformParams(obj);
+            }
+    }
+    return pObject;
 }
+
+}
+
+
