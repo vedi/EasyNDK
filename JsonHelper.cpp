@@ -40,7 +40,7 @@ CCObject *JsonHelper::getCCObjectFromJson(json_t *obj) {
         return array;
     }
     else if (json_is_boolean(obj)) {
-        CCBool *ccBool = CCBool::create((bool) json_boolean(obj));
+        CCBool *ccBool = CCBool::create(json_is_true(obj));
         return ccBool;
     }
     else if (json_is_integer(obj)) {
